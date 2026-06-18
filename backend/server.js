@@ -4,6 +4,9 @@ require('dotenv').config();
 // Import Express
 const express = require('express');
 
+// Import session management
+const session = require('express-session');
+
 // Import the database connection
 const pool = require('./db');
 
@@ -12,6 +15,22 @@ const app = express();
 
 // Middleware: Allow Express to read JSON from requests
 app.use(express.json());
+
+// Configure sessions
+app.use(session({
+  secret: 'your-secret-key-change-this-in-production', // Random string (change this later)
+  resave: false,                                         // Don't resave sessions that haven't changed
+  saveUninitialized: false,                              // Don't create session until data is stored
+  cookie: {
+    secure: false,                                       // Set to true if using HTTPS
+    httpOnly: true,                                      // Prevent JavaScript from accessing the cookie
+    maxAge: 1000 * 60 * 60 * 24,                        // Cookie expires in 24 hours
+  },
+}));
+
+// Import the applications auth
+const authRoutes = require('./routes/auth');
+app.use('/api/auth', authRoutes);
 
 // Import the applications routes
 const applicationsRoutes = require('./routes/applications');

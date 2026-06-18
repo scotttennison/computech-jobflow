@@ -1,3 +1,6 @@
+// Import the authentication middleware
+const requireLogin = require('../middleware/authMiddleware');
+
 // Import Express router
 const express = require('express');
 const router = express.Router();
@@ -6,24 +9,17 @@ const router = express.Router();
 const pool = require('../db');
 
 // GET /api/applications - Get all applications for a user
-router.get('/', async (request, response) => {
+router.get('/', requireLogin, async (request, response) => {
   try {
     // For now, get user_id from query parameter (?user_id=1)
     // Later, this will come from the logged-in session
-    const userId = request.query.user_id;
+    // Get the user ID from the logged-in session (not from the URL)
+const userId = request.session.user.id;
 
-    // Check: Did they provide a user_id?
-    if (!userId) {
-      return response.status(400).json({
-        error: 'user_id is required',
-      });
-    }
-
-    // Query the database: Get all applications for this user
-    const result = await pool.query(
-      'SELECT * FROM applications WHERE user_id = $1 ORDER BY created_at DESC',
-      [userId]
-    );
+const result = await pool.query(
+  'SELECT * FROM applications WHERE user_id = $1 ORDER BY created_at DESC',
+  [userId]
+);
 
     // Send back the jobs
     response.json({
@@ -40,10 +36,13 @@ router.get('/', async (request, response) => {
 });
 
 // POST /api/applications - Create a new application
-router.post('/', async (request, response) => {
+router.post('/', requireLogin, async (request, response) => {
   try {
     // Get the data from the request body
-    const { user_id, company, position, date_applied, notes, follow_up_date } = request.body;
+    const { company, position, date_applied, notes, follow_up_date } = request.body;
+
+    // Get user_id from the logged-in session
+    const user_id = request.session.user.id;
 
     // Validate: Are all required fields provided?
     if (!user_id || !company || !position || !date_applied) {
@@ -73,10 +72,13 @@ router.post('/', async (request, response) => {
 });
 
 // PUT /api/applications/:id - Update an application
-router.put('/:id', async (request, response) => {
+router.put('/:id', requireLogin, async (request, response) => {
   try {
     // Get the ID from the URL
     const { id } = request.params;
+
+    // Get user_id from the logged-in session
+    const user_id = request.session.user.id;
 
     // Get the data they want to update
     const { company, position, status, date_applied, notes, follow_up_date } = request.body;
@@ -152,10 +154,13 @@ router.put('/:id', async (request, response) => {
 });
 
 // DELETE /api/applications/:id - Delete an application
-router.delete('/:id', async (request, response) => {
+router.delete('/:id', requireLogin, async (request, response) => {
   try {
     // Get the ID from the URL
     const { id } = request.params;
+
+    // Get user_id from the logged-in session
+    const user_id = request.session.user.id;
 
     // Delete the application from the database
     const result = await pool.query(
