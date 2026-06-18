@@ -1,0 +1,29 @@
+{
+  "name": "computech-jobflow",
+  "version": "1.0.0",
+  "description": "The app uses PostgreSQL with two core tables:",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/scotttennison/computech-jobflow.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/scotttennison/computech-jobflow/issues"
+  },
+  "homepage": "https://github.com/scotttennison/computech-jobflow#readme",
+  "dependencies": {
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "pg": "^8.21.0"
+  }
+}
