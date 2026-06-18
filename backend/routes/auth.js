@@ -91,5 +91,78 @@ router.post('/logout', (request, response) => {
   }
 });
 
+// POST /api/auth/register - User creates a new account
+router.post('/register', async (request, response) => {
+  try {
+    // Get the data from the request
+    const { email, password, first_name, last_name } = request.body;
+
+    // Validate: Are all fields provided?
+    if (!email || !password || !first_name || !last_name) {
+      return response.status(400).json({
+        error: 'Email, password, first name, and last name are required',
+      });
+    }
+
+    // Validate: Is email in valid format?
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return response.status(400).json({
+        error: 'Invalid email format',
+      });
+    }
+
+    // Validate: Is password at least 6 characters?
+    if (password.length < 6) {
+      return response.status(400).json({
+        error: 'Password must be at least 6 characters',
+      });
+    }
+
+    // Check: Does this email already exist?
+    const existingUser = await pool.query(
+      'SELECT id FROM users WHERE email = $1',
+      [email]
+    );
+
+    if (existingUser.rows.length > 0) {
+      return response.status(409).json({
+        error: 'Email already registered',
+      });
+    }
+
+    // Hash the password with bcrypt
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Create the new user
+    const result = await pool.query(
+      'INSERT INTO users (email, password_hash, first_name, last_name) VALUES ($1, $2, $3, $4) RETURNING id, email, first_name, last_name',
+      [email, hashedPassword, first_name, last_name]
+    );
+
+    const newUser = result.rows[0];
+
+    // Automatically log the user in after registration
+    request.session.user = {
+      id: newUser.id,
+      email: newUser.email,
+      first_name: newUser.first_name,
+      last_name: newUser.last_name,
+    };
+
+    // Send back success
+    response.status(201).json({
+      success: true,
+      message: 'Account created successfully',
+      user: newUser,
+    });
+  } catch (error) {
+    console.error('Error during registration:', error);
+    response.status(500).json({
+      error: 'Registration failed',
+    });
+  }
+});
+
 // Export the router
 module.exports = router;
